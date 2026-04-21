@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, Upload, Sparkles, ArrowRight, Zap, Target, TrendingUp, ExternalLink } from "lucide-react";
+import { Search, Upload, Sparkles, ArrowRight, Zap, Target, TrendingUp, ExternalLink, Image, Copy, Wand2, Clock, CheckCircle2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
@@ -8,36 +8,51 @@ import { motion } from "framer-motion";
 const steps = [
   {
     icon: Search,
-    title: "Trouvez une pub gagnante",
-    description: "Parcourez la bibliothèque Meta Ads ou repérez une publicité performante dans votre niche.",
+    title: "Espionnez les meilleures pubs",
+    description: "Parcourez la bibliothèque Meta Ads directement depuis l'outil et repérez les publicités qui cartonnent dans votre niche.",
   },
   {
     icon: Upload,
-    title: "Uploadez la capture",
-    description: "Glissez-déposez la capture d'écran de la publicité dans notre outil d'analyse IA.",
+    title: "Uploadez la capture d'écran",
+    description: "Faites une capture de la pub qui vous inspire et glissez-la dans notre outil. L'IA va décortiquer sa structure.",
   },
   {
-    icon: Sparkles,
-    title: "Générez votre créatif",
-    description: "L'IA analyse la structure et génère un créatif original adapté à votre produit.",
+    icon: Wand2,
+    title: "Recevez votre créatif original",
+    description: "L'IA génère un visuel + un copywriting 100% original, adapté à VOTRE produit, en gardant la structure qui convertit.",
   },
 ];
 
 const features = [
   {
-    icon: Zap,
-    title: "Analyse IA avancée",
-    description: "Notre IA décortique la structure visuelle, le hook, l'angle marketing et le CTA de chaque publicité.",
+    icon: Image,
+    title: "Visuel + Copy générés",
+    description: "Recevez un créatif publicitaire complet : image haute qualité, headline percutant, texte d'accroche et CTA optimisé.",
+  },
+  {
+    icon: Copy,
+    title: "Inspiré, pas copié",
+    description: "L'IA s'inspire uniquement de la structure et de l'angle marketing. Le résultat est 100% original et adapté à votre marque.",
+  },
+  {
+    icon: Clock,
+    title: "En quelques secondes",
+    description: "Plus besoin d'attendre des jours. Générez des variantes de pubs haute conversion instantanément, quand vous en avez besoin.",
   },
   {
     icon: Target,
-    title: "Ciblage précis",
-    description: "Adaptez chaque créatif à votre audience cible avec des copies optimisées pour la conversion.",
+    title: "Adapté à votre audience",
+    description: "Renseignez votre produit, votre cible et votre bénéfice principal. L'IA personnalise chaque créatif pour maximiser vos conversions.",
   },
   {
-    icon: TrendingUp,
-    title: "Haute conversion",
-    description: "Générez des publicités qui suivent les structures éprouvées des meilleures pubs du marché.",
+    icon: Zap,
+    title: "Accès à Meta Ads Library",
+    description: "Recherchez directement les pubs de vos concurrents par niche et par pays, sans quitter l'outil.",
+  },
+  {
+    icon: CheckCircle2,
+    title: "Prêt à lancer",
+    description: "Téléchargez votre créatif et lancez-le sur Meta, TikTok ou n'importe quelle plateforme. Format carré 1:1 optimisé.",
   },
 ];
 
@@ -55,30 +70,31 @@ const Landing = () => {
             transition={{ duration: 0.6 }}
           >
             <span className="inline-block bg-foreground/5 border border-border text-foreground text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-              ● AGENCE DE CRÉATIVES ADS
+              ● OUTIL IA GRATUIT • par NBR Marketing
             </span>
             <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              Transformez les pubs gagnantes en{" "}
-              <span className="text-primary italic">créatifs</span>{" "}
-              haute conversion
+              Espionnez une pub,{" "}
+              <span className="text-primary italic">générez</span>{" "}
+              la vôtre en 1 clic
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              Vidéos UGC & créatives statiques haute conversion pour Meta & TikTok.
+              Uploadez une capture d'écran d'une pub qui performe, et notre IA crée un créatif original adapté à votre produit — visuel + copywriting inclus.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/signup">
                 <Button variant="hero" size="xl" className="gap-2">
-                  Essayer l'outil gratuitement
+                  Générer mon premier créatif
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
               <a href="https://nbrmarketing.com/" target="_blank" rel="noopener noreferrer">
                 <Button variant="heroOutline" size="xl" className="gap-2">
                   <ExternalLink className="h-4 w-4" />
-                  Découvrir l'agence
+                  Faire appel à l'agence
                 </Button>
               </a>
             </div>
+            <p className="text-xs text-muted-foreground mt-6">Gratuit • Aucune carte bancaire requise</p>
           </motion.div>
         </div>
       </section>
@@ -87,10 +103,10 @@ const Landing = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
           <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-4">
-            Comment ça marche ?
+            3 étapes, 1 créatif prêt à lancer
           </h2>
           <p className="text-muted-foreground text-center mb-16 max-w-lg mx-auto">
-            Trois étapes simples pour transformer l'inspiration en créatifs performants.
+            Pas besoin d'être designer ou copywriter. L'IA fait tout le travail.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {steps.map((step, i) => (
@@ -117,12 +133,15 @@ const Landing = () => {
       </section>
 
       {/* Features */}
-      <section className="py-20 px-4 bg-secondary/50">
+      <section className="py-20 px-4 bg-secondary/30">
         <div className="container mx-auto max-w-5xl">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-16">
-            Pourquoi <span className="text-primary">CréaGénération</span> ?
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-4">
+            Tout ce dont vous avez besoin
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <p className="text-muted-foreground text-center mb-16 max-w-lg mx-auto">
+            Un outil complet pour créer des publicités qui convertissent, sans compétences design.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
               <motion.div
                 key={i}
@@ -130,14 +149,38 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
                 viewport={{ once: true }}
-                className="bg-background rounded-2xl p-8 border border-border hover:shadow-lg transition-shadow"
+                className="bg-background rounded-2xl p-6 border border-border hover:shadow-lg hover:border-primary/20 transition-all"
               >
-                <f.icon className="h-8 w-8 text-primary mb-4" />
+                <f.icon className="h-7 w-7 text-primary mb-3" />
                 <h3 className="font-heading text-lg font-semibold mb-2">{f.title}</h3>
                 <p className="text-muted-foreground text-sm">{f.description}</p>
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* CTA Agence */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-3xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="font-heading text-3xl md:text-4xl font-bold mb-4">
+              Besoin de résultats <span className="text-primary italic">pro</span> ?
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+              CréaGénération est un aperçu de ce que notre agence peut faire. Pour des créatives sur-mesure, du UGC et une stratégie complète Meta & TikTok, faites appel à NBR Marketing.
+            </p>
+            <a href="https://nbrmarketing.com/" target="_blank" rel="noopener noreferrer">
+              <Button variant="hero" size="xl" className="gap-2">
+                Réserver un appel découverte
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+            </a>
+          </motion.div>
         </div>
       </section>
 
