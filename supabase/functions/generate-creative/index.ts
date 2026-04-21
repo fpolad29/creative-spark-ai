@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import Bytez from "npm:bytez.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,30 +10,57 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
     const BYTEZ_API_KEY = Deno.env.get("BYTEZ_API_KEY");
-    if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not configured");
-    if (!BYTEZ_API_KEY) throw new Error("BYTEZ_API_KEY not configured");
+    if (!BYTEZ_API_KEY) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          step: "config",
+          error: "BYTEZ_API_KEY not configured",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
 
     const { imageBase64, productDescription, targetAudience, mainBenefit, customInstructions } = await req.json();
 
     if (!imageBase64 || !productDescription || !targetAudience || !mainBenefit) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+      return new Response(JSON.stringify({ ok: false, step: "validation", error: "Missing required fields" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // STEP 1: Image Analysis with OpenRouter Vision
+    const normalizeImageInput = (rawImage: string): string => {
+      const trimmed = rawImage.trim();
+      const isPublicUrl = /^https?:\/\/.+/i.test(trimmed);
+      const isDataUrl = /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$/.test(trimmed);
+      const isRawBase64 = /^[A-Za-z0-9+/=\s]+$/.test(trimmed) && trimmed.length > 100;
+
+      if (isPublicUrl || isDataUrl) return trimmed;
+      if (isRawBase64) return `data:image/png;base64,${trimmed.replace(/\s+/g, "")}`;
+
+      throw new Error("Invalid image format: expected public URL or base64");
+    };
+
+    const imageUrl = normalizeImageInput(imageBase64);
+    console.log("Vision input image:", {
+      kind: imageUrl.startsWith("http") ? "public_url" : "base64_data_url",
+      preview: imageUrl.slice(0, 120),
+      length: imageUrl.length,
+    });
+
+    const sdk = new Bytez(BYTEZ_API_KEY);
+    const model = sdk.model("openai/gpt-4o");
+
+    // STEP 1: Image analysis with GPT-4o vision
     console.log("Step 1: Analyzing image...");
-    const analysisResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+    let analysis = "";
+    try {
+      const analysisResponse = await model.chat.completions.create({
         messages: [
           {
             role: "user",
@@ -51,34 +79,52 @@ Respond in JSON format with keys: structure, hookStyle, marketingAngle, ctaStyle
               },
               {
                 type: "image_url",
-                image_url: { url: imageBase64 },
+                image_url: { url: imageUrl },
               },
             ],
           },
         ],
-      }),
-    });
+      });
 
-    if (!analysisResponse.ok) {
-      const errText = await analysisResponse.text();
-      console.error("OpenRouter analysis error:", errText);
-      throw new Error("Failed to analyze image");
+      console.log("Vision API response:", analysisResponse);
+      analysis = analysisResponse.choices?.[0]?.message?.content || "";
+      if (!analysis) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            step: "vision_analysis",
+            error: "Failed to analyze image",
+            details: "Empty response from GPT-4o vision",
+          }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+    } catch (err) {
+      console.error("Vision analysis error:", err);
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          step: "vision_analysis",
+          error: "Failed to analyze image",
+          details: err instanceof Error ? err.message : String(err),
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    const analysisData = await analysisResponse.json();
-    const analysis = analysisData.choices?.[0]?.message?.content || "";
     console.log("Analysis complete");
 
-    // STEP 2: Copy Generation with OpenRouter
+    // STEP 2: Copy generation with GPT-4o
     console.log("Step 2: Generating ad copy...");
-    const copyResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+    let copyText = "";
+    try {
+      const copyResponse = await model.chat.completions.create({
         messages: [
           {
             role: "system",
@@ -105,17 +151,39 @@ Generate:
 Respond in JSON with keys: headline, adCopy, cta`,
           },
         ],
-      }),
-    });
+      });
 
-    if (!copyResponse.ok) {
-      const errText = await copyResponse.text();
-      console.error("OpenRouter copy error:", errText);
-      throw new Error("Failed to generate copy");
+      console.log("Copy API response:", copyResponse);
+      copyText = copyResponse.choices?.[0]?.message?.content || "";
+      if (!copyText) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            step: "copy_generation",
+            error: "Failed to generate copy",
+            details: "Empty response from GPT-4o",
+          }),
+          {
+            status: 502,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+    } catch (err) {
+      console.error("Copy generation error:", err);
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          step: "copy_generation",
+          error: "Failed to generate copy",
+          details: err instanceof Error ? err.message : String(err),
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
-
-    const copyData = await copyResponse.json();
-    const copyText = copyData.choices?.[0]?.message?.content || "";
     
     // Parse the JSON from the response
     let copyResult = { headline: "", adCopy: "", cta: "" };
@@ -168,14 +236,15 @@ IMPORTANT: This must be a completely ORIGINAL design. Do not copy any existing b
       }),
     });
 
-    let imageUrl = "";
+    let generatedImageUrl = "";
     if (bytezResponse.ok) {
       const bytezData = await bytezResponse.json();
-      imageUrl = bytezData?.output?.[0]?.url || bytezData?.output?.url || bytezData?.data?.[0]?.url || "";
-      if (!imageUrl && bytezData?.output) {
+      console.log("DALL-E API response:", bytezData);
+      generatedImageUrl = bytezData?.output?.[0]?.url || bytezData?.output?.url || bytezData?.data?.[0]?.url || "";
+      if (!generatedImageUrl && bytezData?.output) {
         // Try to extract base64 or URL from various response shapes
         if (typeof bytezData.output === "string") {
-          imageUrl = bytezData.output;
+          generatedImageUrl = bytezData.output;
         }
       }
       console.log("Image generated successfully");
@@ -190,7 +259,7 @@ IMPORTANT: This must be a completely ORIGINAL design. Do not copy any existing b
         headline: copyResult.headline,
         adCopy: copyResult.adCopy,
         cta: copyResult.cta,
-        imageUrl,
+        imageUrl: generatedImageUrl,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -199,7 +268,12 @@ IMPORTANT: This must be a completely ORIGINAL design. Do not copy any existing b
   } catch (error) {
     console.error("generate-creative error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({
+        ok: false,
+        step: "unexpected",
+        error: "Unexpected backend error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
