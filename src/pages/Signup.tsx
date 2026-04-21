@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
+import nbrLogo from "@/assets/nbr-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,8 +37,7 @@ const Signup = () => {
       <div className="w-full max-w-md bg-background rounded-2xl shadow-xl border border-border p-8">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <span className="font-heading font-bold text-lg gradient-text">CréaGénération</span>
+            <img src={nbrLogo} alt="NBR Marketing" className="h-8" />
           </Link>
           <h1 className="font-heading text-2xl font-bold">Créer un compte</h1>
           <p className="text-muted-foreground text-sm mt-1">Commencez à générer des créatifs</p>
