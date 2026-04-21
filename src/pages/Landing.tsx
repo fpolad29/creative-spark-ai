@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, Upload, Sparkles, ArrowRight, Zap, Target, TrendingUp } from "lucide-react";
+import { Search, Upload, Sparkles, ArrowRight, Zap, Target, TrendingUp, ExternalLink } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
@@ -54,29 +54,30 @@ const Landing = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-block gradient-bg text-primary-foreground text-sm font-medium px-4 py-1.5 rounded-full mb-6">
-              Propulsé par l'IA • par NBRMarketing
+            <span className="inline-block bg-foreground/5 border border-border text-foreground text-sm font-medium px-4 py-1.5 rounded-full mb-6">
+              ● AGENCE DE CRÉATIVES ADS
             </span>
             <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              Transformez les Pubs Gagnantes en{" "}
-              <span className="gradient-text">Créatifs Haute Conversion</span>
+              Transformez les pubs gagnantes en{" "}
+              <span className="text-primary italic">créatifs</span>{" "}
+              haute conversion
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              Analysez les meilleures publicités du marché et générez des créatifs originaux 
-              adaptés à votre produit en un clic.
+              Vidéos UGC & créatives statiques haute conversion pour Meta & TikTok.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/signup">
                 <Button variant="hero" size="xl" className="gap-2">
-                  Commencer Gratuitement
+                  Essayer l'outil gratuitement
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/login">
-                <Button variant="heroOutline" size="xl">
-                  Se connecter
+              <a href="https://nbrmarketing.com/" target="_blank" rel="noopener noreferrer">
+                <Button variant="heroOutline" size="xl" className="gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  Découvrir l'agence
                 </Button>
-              </Link>
+              </a>
             </div>
           </motion.div>
         </div>
@@ -119,7 +120,7 @@ const Landing = () => {
       <section className="py-20 px-4 bg-secondary/50">
         <div className="container mx-auto max-w-5xl">
           <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-16">
-            Pourquoi <span className="gradient-text">CréaGénération</span> ?
+            Pourquoi <span className="text-primary">CréaGénération</span> ?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features.map((f, i) => (
