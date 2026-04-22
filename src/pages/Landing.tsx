@@ -1,9 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, Upload, Sparkles, ArrowRight, Zap, Target, TrendingUp, ExternalLink, Image, Copy, Wand2, Clock, CheckCircle2 } from "lucide-react";
+import { Search, Upload, Sparkles, ArrowRight, Zap, Target, TrendingUp, ExternalLink, Image, Copy, Wand2, Clock, CheckCircle2, Lock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 
 const steps = [
   {
@@ -57,6 +63,19 @@ const features = [
 ];
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const [productDescription, setProductDescription] = useState("");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [mainBenefit, setMainBenefit] = useState("");
+
+  const handleTryIt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Save prefill data
+    sessionStorage.setItem("creaPrefill", JSON.stringify({ productDescription, targetAudience, mainBenefit }));
+    const { data: { session } } = await supabase.auth.getSession();
+    navigate(session ? "/tool" : "/signup");
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -80,21 +99,36 @@ const Landing = () => {
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
               Uploadez une capture d'écran d'une pub qui performe, et notre IA crée un créatif original adapté à votre produit — visuel + copywriting inclus.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/signup">
-                <Button variant="hero" size="xl" className="gap-2">
-                  Générer mon premier créatif
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <a href="https://nbrmarketing.com/" target="_blank" rel="noopener noreferrer">
-                <Button variant="heroOutline" size="xl" className="gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Faire appel à l'agence
-                </Button>
-              </a>
-            </div>
-            <p className="text-xs text-muted-foreground mt-6">Gratuit • Aucune carte bancaire requise</p>
+            <form onSubmit={handleTryIt} className="max-w-xl mx-auto bg-background/80 backdrop-blur border border-border rounded-2xl p-6 shadow-lg text-left space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-primary mb-2">
+                <Sparkles className="h-4 w-4" /> Essayez le générateur maintenant
+              </div>
+              <div>
+                <Label>Votre produit *</Label>
+                <Textarea required value={productDescription} onChange={(e) => setProductDescription(e.target.value)} placeholder="Ex: Crème anti-âge naturelle à base de rétinol végétal..." className="min-h-[70px]" />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Audience cible *</Label>
+                  <Input required value={targetAudience} onChange={(e) => setTargetAudience(e.target.value)} placeholder="Femmes 30-50, skincare" />
+                </div>
+                <div>
+                  <Label>Bénéfice principal *</Label>
+                  <Input required value={mainBenefit} onChange={(e) => setMainBenefit(e.target.value)} placeholder="Peau plus jeune en 30j" />
+                </div>
+              </div>
+              <Button type="submit" variant="hero" size="xl" className="w-full gap-2">
+                <Lock className="h-4 w-4" />
+                Continuer et générer mon créatif
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Inscription gratuite en 10 secondes • Aucune carte bancaire •{" "}
+                <a href="https://nbrmarketing.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Découvrir l'agence NBR
+                </a>
+              </p>
+            </form>
           </motion.div>
         </div>
       </section>
