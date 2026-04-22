@@ -34,10 +34,10 @@ const Landing = () => {
               ● OUTIL IA GRATUIT • par NBR Marketing
             </span>
             <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              Espionnez une pub, <span className="text-primary italic">générez</span> la vôtre en 1 clic
+              Créez des <span className="text-primary italic">créas déjà testées</span> et approuvées sur votre marché
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
-              Uploadez une capture d'écran d'une pub qui performe, et notre IA crée un créatif original adapté à votre produit — visuel + copywriting inclus.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-6">
+              Importez une pub qui performe, ajoutez votre logo, votre produit et votre site, puis obtenez une variation fidèle à la structure d'origine, adaptée à votre marque et prête à convertir.
             </p>
             <p className="text-sm text-muted-foreground">👇 Essayez le générateur directement ci-dessous</p>
           </motion.div>
@@ -74,8 +74,8 @@ const Landing = () => {
       {/* Features */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-5xl">
-          <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-4">Tout ce dont vous avez besoin</h2>
-          <p className="text-muted-foreground text-center mb-16 max-w-lg mx-auto">Un outil complet pour créer des publicités qui convertissent.</p>
+          <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-4">Tout ce qu'il faut pour dupliquer ce qui convertit déjà</h2>
+          <p className="text-muted-foreground text-center mb-16 max-w-2xl mx-auto">Gardez la structure gagnante, injectez votre branding, votre produit et votre message, puis sortez une créa plus propre, plus cohérente et plus prête à performer.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1, duration: 0.5 }} viewport={{ once: true }} className="bg-background rounded-2xl p-6 border border-border hover:shadow-lg hover:border-primary/20 transition-all">
