@@ -53,6 +53,17 @@ const ToolPage = () => {
       if (!session) navigate("/login");
     };
     checkAuth();
+    // Apply prefill from landing page if present
+    const prefillRaw = sessionStorage.getItem("creaPrefill");
+    if (prefillRaw) {
+      try {
+        const p = JSON.parse(prefillRaw);
+        if (p.productDescription) setProductDescription(p.productDescription);
+        if (p.targetAudience) setTargetAudience(p.targetAudience);
+        if (p.mainBenefit) setMainBenefit(p.mainBenefit);
+      } catch {}
+      sessionStorage.removeItem("creaPrefill");
+    }
   }, [navigate]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
