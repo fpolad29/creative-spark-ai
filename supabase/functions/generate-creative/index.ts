@@ -39,18 +39,26 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "Tu es un copywriter publicitaire expert en pubs Meta/Facebook haute conversion. Tu écris en français. Tu t'inspires de la structure d'une pub de référence pour créer un copywriting 100% original."
+            content: "Tu es un copywriter publicitaire expert en pubs Meta/Facebook haute conversion. Tu écris en français. Tu reproduis FIDÈLEMENT la structure, le ton, la longueur et le style de la pub de référence — seul le produit/sujet change."
           },
           {
             role: "user",
             content: [
-              { type: "text", text: `Analyse la structure de cette pub (hook, angle, CTA, style) puis crée une nouvelle pub pour :
+              { type: "text", text: `Tu dois DUPLIQUER cette pub en ne changeant QUE le sujet pour l'adapter au nouveau produit. Règles strictes :
+
+1. Respecte EXACTEMENT la même structure (nombre de mots du headline, longueur du texte, emplacement du CTA, style du CTA).
+2. Garde le MÊME ton, le MÊME angle marketing, la MÊME émotion.
+3. Ne rajoute rien qui n'existe pas dans l'original.
+4. Décris en anglais, avec un MAXIMUM de précision, TOUT ce que tu vois sur l'image (palette de couleurs exacte avec codes hex approximatifs, typographie, disposition, éléments visuels, textures, arrière-plan, présence ou NON de personnes, style photo/illustration/flat/3D, etc.) — cette description servira à reproduire l'image à l'identique.
+5. Si il n'y a PAS de personne sur l'image originale, n'en rajoute AUCUNE. Si il y en a, garde-les.
+
+Nouveau produit à placer à la place du sujet original :
 - Produit : ${productDescription}
 - Audience : ${targetAudience}
 - Bénéfice principal : ${mainBenefit}
-${customInstructions ? `- Instructions : ${customInstructions}` : ""}
+${customInstructions ? `- Instructions additionnelles : ${customInstructions}` : ""}
 
-Génère un headline punchy (max 10 mots), un texte publicitaire (3-4 phrases), et un CTA court.` },
+Génère le headline, le texte publicitaire et le CTA qui remplaceront ceux de l'original (même longueur, même ton), ainsi qu'un visualDescription TRÈS DÉTAILLÉ en anglais de l'image originale pour pouvoir la reproduire.` },
               { type: "image_url", image_url: { url: imageUrl } },
             ],
           },
@@ -66,9 +74,9 @@ Génère un headline punchy (max 10 mots), un texte publicitaire (3-4 phrases), 
                 headline: { type: "string" },
                 adCopy: { type: "string" },
                 cta: { type: "string" },
-                imagePrompt: { type: "string", description: "Prompt détaillé en anglais pour générer l'image publicitaire, format 1:1, style Meta Ads moderne" },
+                visualDescription: { type: "string", description: "Description EXTRÊMEMENT détaillée en anglais de l'image originale : palette exacte (couleurs + hex), composition, typo, disposition, présence/absence d'humains, style visuel, arrière-plan, textures. Servira à reproduire l'image à l'identique." },
               },
-              required: ["headline", "adCopy", "cta", "imagePrompt"],
+              required: ["headline", "adCopy", "cta", "visualDescription"],
               additionalProperties: false,
             },
           },
@@ -91,14 +99,26 @@ Génère un headline punchy (max 10 mots), un texte publicitaire (3-4 phrases), 
       console.error("No tool call in response:", JSON.stringify(copyData));
       return new Response(JSON.stringify({ error: "Réponse IA invalide" }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const { headline, adCopy, cta, imagePrompt } = JSON.parse(toolCall.function.arguments);
+    const { headline, adCopy, cta, visualDescription } = JSON.parse(toolCall.function.arguments);
     console.log("Copy generated:", { headline, cta });
 
-    // STEP 3: Generate image via gemini-2.5-flash-image
-    console.log("Generating image...");
-    const fullImagePrompt = `${imagePrompt}
+    // STEP 3: EDIT the original image — keep same structure, colors, style, only swap subject + text
+    console.log("Editing reference image...");
+    const editPrompt = `Recreate this exact advertising creative with these STRICT rules:
 
-Professional Meta Ads creative, 1:1 square format, modern high-converting design, bold typography, vibrant but professional colors, clean layout. Include the headline text "${headline}" prominently. Product: ${productDescription}. CTA: "${cta}". NOT AI-looking, polished and premium.`;
+1. KEEP IDENTICAL: the overall layout, composition, color palette, typography style, background, textures, visual style (photo/illustration/3D/flat), lighting, mood.
+2. KEEP IDENTICAL: the EXACT position of every element (headline, subheadline, product area, CTA button, logos, badges, icons).
+3. Presence of humans: ${`if the original has NO person, DO NOT add any person. If it has people, keep them with the same style and pose.`}
+4. REPLACE the product/subject visually with: ${productDescription}.
+5. REPLACE the headline text with EXACTLY: "${headline}"
+6. REPLACE the CTA button text with EXACTLY: "${cta}"
+7. Any other text (subtitle/benefits) should be adapted to the new product in the SAME LANGUAGE (French) and SAME LENGTH as the original.
+8. Do NOT add decorative elements that weren't in the original. Do NOT change the color palette. Do NOT change the style.
+9. Output a clean 1:1 square, same resolution feel as original, production-ready Meta Ads creative.
+
+Reference visual description (from the original): ${visualDescription}
+
+Target product: ${productDescription}. Audience: ${targetAudience}. Main benefit: ${mainBenefit}.`;
 
     let generatedImageUrl = "";
     try {
@@ -107,7 +127,13 @@ Professional Meta Ads creative, 1:1 square format, modern high-converting design
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "google/gemini-2.5-flash-image",
-          messages: [{ role: "user", content: fullImagePrompt }],
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: editPrompt },
+              { type: "image_url", image_url: { url: imageUrl } },
+            ],
+          }],
           modalities: ["image", "text"],
         }),
       });
