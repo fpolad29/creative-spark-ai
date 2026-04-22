@@ -1,9 +1,15 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, Upload, Sparkles, ArrowRight, Zap, Target, TrendingUp, ExternalLink, Image, Copy, Wand2, Clock, CheckCircle2 } from "lucide-react";
+import { Search, Upload, Sparkles, ArrowRight, Zap, Target, TrendingUp, ExternalLink, Image, Copy, Wand2, Clock, CheckCircle2, Lock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 
 const steps = [
   {
