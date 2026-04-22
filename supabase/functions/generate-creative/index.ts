@@ -18,7 +18,16 @@ serve(async (req) => {
       });
     }
 
-    const { imageBase64, productDescription, targetAudience, mainBenefit, customInstructions } = await req.json();
+    const {
+      imageBase64,
+      logoBase64,
+      productImageBase64,
+      productDescription,
+      targetAudience,
+      mainBenefit,
+      customInstructions,
+      websiteUrl,
+    } = await req.json();
     if (!imageBase64 || !productDescription || !targetAudience || !mainBenefit) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -28,6 +37,16 @@ serve(async (req) => {
     const imageUrl = imageBase64.startsWith("data:") || imageBase64.startsWith("http")
       ? imageBase64
       : `data:image/png;base64,${imageBase64.replace(/\s+/g, "")}`;
+    const logoUrl = typeof logoBase64 === "string" && logoBase64.length > 0
+      ? (logoBase64.startsWith("data:") || logoBase64.startsWith("http")
+        ? logoBase64
+        : `data:image/png;base64,${logoBase64.replace(/\s+/g, "")}`)
+      : null;
+    const productAssetUrl = typeof productImageBase64 === "string" && productImageBase64.length > 0
+      ? (productImageBase64.startsWith("data:") || productImageBase64.startsWith("http")
+        ? productImageBase64
+        : `data:image/png;base64,${productImageBase64.replace(/\s+/g, "")}`)
+      : null;
 
     // STEP 1 + 2 combined: Analyze image + generate copy via tool calling
     console.log("Analyzing + generating copy...");
@@ -39,7 +58,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "Tu es un copywriter publicitaire expert en pubs Meta/Facebook haute conversion. Tu écris en français. Tu reproduis FIDÈLEMENT la structure, le ton, la longueur et le style de la pub de référence — seul le produit/sujet change."
+            content: "Tu es un directeur créatif performance expert Meta Ads. Tu écris en français. Tu reproduis FIDÈLEMENT la structure, le ton, la hiérarchie visuelle et le style de la pub de référence — seuls la marque, le produit et les textes utiles changent."
           },
           {
             role: "user",
@@ -48,18 +67,26 @@ serve(async (req) => {
 
 1. Respecte EXACTEMENT la même structure (nombre de mots du headline, longueur du texte, emplacement du CTA, style du CTA).
 2. Garde le MÊME ton, le MÊME angle marketing, la MÊME émotion.
-3. Ne rajoute rien qui n'existe pas dans l'original.
-4. Décris en anglais, avec un MAXIMUM de précision, TOUT ce que tu vois sur l'image (palette de couleurs exacte avec codes hex approximatifs, typographie, disposition, éléments visuels, textures, arrière-plan, présence ou NON de personnes, style photo/illustration/flat/3D, etc.) — cette description servira à reproduire l'image à l'identique.
-5. Si il n'y a PAS de personne sur l'image originale, n'en rajoute AUCUNE. Si il y en a, garde-les.
+3. Ne rajoute rien qui n'existe pas dans l'original, sauf le logo et le produit fournis si le brief le demande.
+4. Le produit fourni en asset ne doit JAMAIS être transformé : garde sa forme, son packshot, ses proportions et son identité visuelle.
+5. Le logo fourni doit être intégré naturellement dans une zone cohérente de la créa, sans casser la composition.
+6. Si un site est fourni, déduis la promesse de marque et le vocabulaire à partir de son URL/nom de domaine, sans inventer une identité hors sujet.
+7. Décris en anglais, avec un MAXIMUM de précision, TOUT ce que tu vois sur l'image (palette de couleurs exacte avec codes hex approximatifs, typographie, disposition, éléments visuels, textures, arrière-plan, présence ou NON de personnes, style photo/illustration/flat/3D, etc.) — cette description servira à reproduire l'image à l'identique.
+8. Si il n'y a PAS de personne sur l'image originale, n'en rajoute AUCUNE. Si il y en a, garde-les.
 
 Nouveau produit à placer à la place du sujet original :
 - Produit : ${productDescription}
 - Audience : ${targetAudience}
 - Bénéfice principal : ${mainBenefit}
+- Site web : ${websiteUrl || "non fourni"}
+- Logo fourni : ${logoUrl ? "oui" : "non"}
+- Packshot produit fourni : ${productAssetUrl ? "oui" : "non"}
 ${customInstructions ? `- Instructions additionnelles : ${customInstructions}` : ""}
 
 Génère le headline, le texte publicitaire et le CTA qui remplaceront ceux de l'original (même longueur, même ton), ainsi qu'un visualDescription TRÈS DÉTAILLÉ en anglais de l'image originale pour pouvoir la reproduire.` },
               { type: "image_url", image_url: { url: imageUrl } },
+              ...(logoUrl ? [{ type: "image_url", image_url: { url: logoUrl } }] : []),
+              ...(productAssetUrl ? [{ type: "image_url", image_url: { url: productAssetUrl } }] : []),
             ],
           },
         ],
@@ -75,8 +102,9 @@ Génère le headline, le texte publicitaire et le CTA qui remplaceront ceux de l
                 adCopy: { type: "string" },
                 cta: { type: "string" },
                 visualDescription: { type: "string", description: "Description EXTRÊMEMENT détaillée en anglais de l'image originale : palette exacte (couleurs + hex), composition, typo, disposition, présence/absence d'humains, style visuel, arrière-plan, textures. Servira à reproduire l'image à l'identique." },
+                brandDirection: { type: "string", description: "Consignes concrètes pour harmoniser la créa avec le logo, le produit et le site sans casser la structure d'origine." },
               },
-              required: ["headline", "adCopy", "cta", "visualDescription"],
+              required: ["headline", "adCopy", "cta", "visualDescription", "brandDirection"],
               additionalProperties: false,
             },
           },
@@ -99,7 +127,7 @@ Génère le headline, le texte publicitaire et le CTA qui remplaceront ceux de l
       console.error("No tool call in response:", JSON.stringify(copyData));
       return new Response(JSON.stringify({ error: "Réponse IA invalide" }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const { headline, adCopy, cta, visualDescription } = JSON.parse(toolCall.function.arguments);
+    const { headline, adCopy, cta, visualDescription, brandDirection } = JSON.parse(toolCall.function.arguments);
     console.log("Copy generated:", { headline, cta });
 
     // STEP 3: EDIT the original image — keep same structure, colors, style, only swap subject + text
@@ -109,16 +137,19 @@ Génère le headline, le texte publicitaire et le CTA qui remplaceront ceux de l
 1. KEEP IDENTICAL: the overall layout, composition, color palette, typography style, background, textures, visual style (photo/illustration/3D/flat), lighting, mood.
 2. KEEP IDENTICAL: the EXACT position of every element (headline, subheadline, product area, CTA button, logos, badges, icons).
 3. Presence of humans: ${`if the original has NO person, DO NOT add any person. If it has people, keep them with the same style and pose.`}
-4. REPLACE the product/subject visually with: ${productDescription}.
-5. REPLACE the headline text with EXACTLY: "${headline}"
-6. REPLACE the CTA button text with EXACTLY: "${cta}"
-7. Any other text (subtitle/benefits) should be adapted to the new product in the SAME LANGUAGE (French) and SAME LENGTH as the original.
-8. Do NOT add decorative elements that weren't in the original. Do NOT change the color palette. Do NOT change the style.
-9. Output a clean 1:1 square, same resolution feel as original, production-ready Meta Ads creative.
+4. If a product packshot is provided, INSERT THAT EXACT PRODUCT IMAGE into the product area. Do not redraw it, do not stylize it, do not alter its proportions, label, material, or shape.
+5. If a logo is provided, integrate that exact logo naturally in a coherent branding area while preserving the original composition.
+6. Adapt accent colors only when needed so the creative feels aligned with the logo branding, but preserve the original art direction and conversion structure.
+7. REPLACE the headline text with EXACTLY: "${headline}"
+8. REPLACE the CTA button text with EXACTLY: "${cta}"
+9. Any other text (subtitle/benefits) should be adapted to the new product in the SAME LANGUAGE (French) and SAME LENGTH as the original.
+10. Do NOT add decorative elements that weren't in the original. Do NOT add humans if there were none. Do NOT change the style.
+11. Output a clean 1:1 square, premium quality, production-ready Meta Ads creative with crisp text and clean compositing.
 
 Reference visual description (from the original): ${visualDescription}
+Brand direction: ${brandDirection}
 
-Target product: ${productDescription}. Audience: ${targetAudience}. Main benefit: ${mainBenefit}.`;
+Target product: ${productDescription}. Audience: ${targetAudience}. Main benefit: ${mainBenefit}. Website: ${websiteUrl || "not provided"}.`;
 
     let generatedImageUrl = "";
     try {
@@ -132,6 +163,8 @@ Target product: ${productDescription}. Audience: ${targetAudience}. Main benefit
             content: [
               { type: "text", text: editPrompt },
               { type: "image_url", image_url: { url: imageUrl } },
+              ...(logoUrl ? [{ type: "image_url", image_url: { url: logoUrl } }] : []),
+              ...(productAssetUrl ? [{ type: "image_url", image_url: { url: productAssetUrl } }] : []),
             ],
           }],
           modalities: ["image", "text"],

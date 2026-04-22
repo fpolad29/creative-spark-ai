@@ -23,9 +23,9 @@ const ToolPage = () => {
         <div className="container mx-auto max-w-5xl">
           <div className="text-center mb-12">
             <h1 className="font-heading text-3xl md:text-4xl font-bold mb-2">
-              Générateur de <span className="gradient-text">Créatifs</span>
+              Générateur de <span className="gradient-text">créas fidèles</span>
             </h1>
-            <p className="text-muted-foreground">Uploadez une pub, décrivez votre produit, et laissez l'IA faire le reste.</p>
+            <p className="text-muted-foreground">Conservez la structure de la pub gagnante, ajoutez votre branding et votre produit, puis générez une variation plus propre et prête à convertir.</p>
           </div>
           <CreativeGenerator />
         </div>
