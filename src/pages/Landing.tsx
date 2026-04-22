@@ -63,6 +63,19 @@ const features = [
 ];
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const [productDescription, setProductDescription] = useState("");
+  const [targetAudience, setTargetAudience] = useState("");
+  const [mainBenefit, setMainBenefit] = useState("");
+
+  const handleTryIt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Save prefill data
+    sessionStorage.setItem("creaPrefill", JSON.stringify({ productDescription, targetAudience, mainBenefit }));
+    const { data: { session } } = await supabase.auth.getSession();
+    navigate(session ? "/tool" : "/signup");
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
